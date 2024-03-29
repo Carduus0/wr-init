@@ -1,0 +1,30 @@
+{
+    "manifest_version":3,
+    "name": "__MSG_appName__",
+    "version": "1.0.0",
+    "default_locale": "en",
+    "description": "__MSG_shortDesc__",
+    "background": {
+      "service_worker": "background.js"
+  },
+    
+  "action": {
+    "default_icon": {
+      "48": "icons/logo/48x48 IconWatermark.png"
+    }
+  },
+    "icons": {
+      "16": "icons/logo/16x16 IconWatermark.png",
+      "48": "icons/logo/48x48 IconWatermark.png",
+      "96": "icons/logo/96x96 IconWatermark.png",
+      "128": "icons/logo/128x128 IconWatermark.png"
+    },
+    "permissions": [
+      "tabs",
+        "activeTab",
+        "storage",
+        "scripting"
+      ],
+      "host_permissions": [
+      "http://78.136.220.93:40008/remove_watermark"]
+}

@@ -1,0 +1,95 @@
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body{
+font-family: "Roboto", sans-serif; 
+}
+:root {
+  --main-color: #6750A4;
+  --hover-main: #9775EF;
+  --main: #EADDFF;
+  --no-active: #48464C;
+  --done: #50A45D;
+  --black: #1C1C1E;
+}
+
+.page-container{
+  position: relative;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  max-width: 440px;
+}
+.center-row{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.center-col{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+}
+.header{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.title{
+color: #000;
+text-align: center;
+font-family: "Roboto", sans-serif;
+font-size: 36px;
+font-style: normal;
+font-weight: 400;
+line-height: 44px;
+}
+.main{
+  background-color: var(--main);
+  border-radius: 24px;
+  border: 1px dashed;
+  width: 100%;
+  min-height:294px ;
+}
+
+.upload__img{
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.upload__btn{
+  width: 200px;
+  height: 40px;
+  margin: 12px;
+  padding: 4px 24px;
+  border-radius: 24px;
+  border: none;
+  background-color: var(--main-color);
+  color: #FFF;
+  text-align: center;
+/* Watermark Button */
+font-family: "Roboto", sans-serif;
+font-size: 24px;
+font-style: normal;
+font-weight: 500;
+line-height: 32px; /* 133.333% */
+}
+
+.upload__text{
+  width: 274px;
+  color: var(--Black, #1C1C1E);
+  text-align: center;
+  /* Secondary text */
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;  
+}

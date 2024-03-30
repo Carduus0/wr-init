@@ -10,13 +10,14 @@ export default defineConfig({
   build: {
     minify: false,
     outDir: outDir,
-    sourcemap: true,
+    // sourcemap: true,
     emptyOutDir: true, // Очищаем папку сборки перед сборкой
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, "src/main.js"), // основная точка входа для вашего приложения
+        main: path.resolve(__dirname, "src/WatermarkRemover.vue"), // основная точка входа для вашего приложения
       },
       output: {
+        format: "iife", // Формат IIFE подходит для content scripts
         // Настройки, чтобы имена файлов оставались постоянными
         entryFileNames: `[name].js`,
         chunkFileNames: `[name].js`,

@@ -1,11 +1,11 @@
 <template>
-  <ShadowDomWrapper>
-    <div class="wr__wrapper"></div>
-  </ShadowDomWrapper>
+  <div class="wr__page">
+    <p>Remove Watermark from Photo</p>
+  </div>
 </template>
 <script>
-import ShadowDomWrapper from "./shadow-dom/ShadowDOMWrapper.vue";
-
+alert("I`m here!");
+document.body.style.backgroundColor = "#b9f7c3";
 // import { ref } from "vue";
 
 // const show = ref(true);
@@ -50,9 +50,10 @@ import ShadowDomWrapper from "./shadow-dom/ShadowDOMWrapper.vue";
 </script>
 
 <style scoped>
-.wr__wrapper {
+.wr__page {
   width: 640px;
   height: 800px;
-  background-color: #eaddff;
+  background-color: red;
+  border: 2px dashed;
 }
 </style>

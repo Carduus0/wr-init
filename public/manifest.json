@@ -7,7 +7,7 @@
     "background": {
       "service_worker": "./background.js"
   },
-    
+
   "action": {
     "default_icon": {
       "48": "icons/logo/48x48 IconWatermark.png"

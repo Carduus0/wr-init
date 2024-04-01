@@ -4,10 +4,10 @@
       <div class="title">Remove Watermark</div>
       <div class="title">from Photo</div>
     </header>
-    <main class="main center-col">
+    <main class="main">
       <div
         class="center-col drop-zone"
-        @dragover.prevent="clearDropZone"
+        @dragover.prevent="allowDrop"
         @drop="handleDrop"
       >
         <div class="upload__info center-col">
@@ -32,7 +32,7 @@
             type="file"
             style="display: none"
             accept="image/*"
-            @change="previewFile"
+            @change="handleFiles"
           />
           <button class="upload__btn center-col" @click="triggerFileInput">
             Upload Image
@@ -85,7 +85,6 @@ makeImagesDraggable();
 
 const uploadButton = document.getElementById("uploadBtn");
 
-const dropZone = document.getElementById("dropZone");
 const previewImage = document.getElementById("previewImage");
 const downloadButton = document.getElementById("downloadButton");
 
@@ -99,28 +98,35 @@ function makeImagesDraggable() {
   });
 }
 
-// dragover для разрешения сброса.
-dropZone.addEventListener("dragover", (event) => {
-  event.preventDefault(); // Разрешаем сброс
-  event.dataTransfer.dropEffect = "copy"; // Показываем, что это операция копирования
-});
-
-dropZone.addEventListener("drop", function (event) {
-  event.preventDefault();
-  const imageUrl = event.dataTransfer.getData("text/uri-list");
-  const imgElem = document.createElement("img");
-  imgElem.src = imageUrl;
-  dropZone.innerHTML = "";
-  dropZone.appendChild(imgElem);
-});
-
-dropZone.addEventListener("drop", function (event) {
-  event.preventDefault();
-  const imageFile = event.dataTransfer.files[0];
-  if (imageFile) {
-    previewFile({ target: { files: [imageFile] } });
+function allowDrop(event) {
+  // Проверяем, содержит ли объект dataTransfer файлы и являются ли они изображениями
+  if (event.dataTransfer.items) {
+    for (const item of event.dataTransfer.items) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        // Если одно из перетаскиваемых элементов — изображение, разрешаем сброс
+        event.dataTransfer.dropEffect = "copy"; // Оповещаем пользователя о копировании элемента
+        return;
+      }
+    }
   }
-});
+  // Если ни один из элементов не является изображением, предотвращаем сброс
+  event.preventDefault();
+}
+
+// Функция для обработки события drop
+function handleDrop(event) {
+  // Вызывается, когда пользователь отпускает элементы над drop-zone
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    for (const file of files) {
+      if (file && file.type.startsWith("image/")) {
+        // Только если файл является изображением, обрабатываем его
+        previewFile(file);
+        break; // Предполагаем, что нужно обработать только один файл
+      }
+    }
+  }
+}
 //-----------send------------------
 function sendImageToBackground(file) {
   const reader = new FileReader();
@@ -161,20 +167,21 @@ function handleResponse(response) {
     console.error("No response from background script or error occurred.");
   }
 }
-uploadButton.addEventListener("click", () => {
-  fileInput.click(); // Имитация клика по скрытому input
-});
-fileInput.addEventListener("change", (event) => {
+function triggerFileInput() {
+  fileInput.value?.click();
+}
+function handleFiles(event) {
   const file = event.target.files[0];
-  if (file) {
+  if (file && file.type.startsWith("image/")) {
     previewFile(file);
   }
-});
+}
 
 const previewFile = (file) => {
   const reader = new FileReader();
   reader.onload = (e) => {
-    imageSrc.value = e.target.result; // Обновляем реактивное свойство изображения
+    imageSrc.value = e.target.result;
+    sendImageToBackground(file);
     // Отображаем превью
     const imgElem = document.createElement("img");
     imgElem.src = imageSrc.value;
@@ -195,21 +202,6 @@ const clearDropZone = () => {
   }
 };
 
-downloadButton.addEventListener("click", downloadImage);
-
-//-----------------------------
-
-// Обновление отображения изображения
-function updateImageDisplay() {
-  if (imageSrc) {
-    previewImage.src = imageSrc;
-    previewImage.style.display = "block";
-    downloadButton.style.display = "block";
-  } else {
-    previewImage.style.display = "none";
-    downloadButton.style.display = "none";
-  }
-}
 // ------download-----------
 const downloadImage = () => {
   const link = document.createElement("a");
@@ -219,7 +211,6 @@ const downloadImage = () => {
   link.click();
   document.body.removeChild(link);
 };
-downloadButton.addEventListener("click", downloadImage);
 </script>
 <style scoped>
 @font-face {
@@ -296,14 +287,17 @@ downloadButton.addEventListener("click", downloadImage);
 }
 .main {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .drop-zone {
   width: 100%;
   height: 294px;
-  background-color: var(--main);
+  background-color: #eaddff;
   border-radius: 24px;
-  border: 1px dashed;
+  border: 2px dashed black;
 }
 
 #drop-zone.dragover {
@@ -323,7 +317,7 @@ downloadButton.addEventListener("click", downloadImage);
   padding: 4px 24px;
   border-radius: 24px;
   border: none;
-  background-color: var(--main-color);
+  background-color: #6750a4;
   color: #fff;
   text-align: center;
   /* Watermark Button */
@@ -338,7 +332,7 @@ downloadButton.addEventListener("click", downloadImage);
 }
 .upload__text {
   width: 274px;
-  color: var(--Black, #1c1c1e);
+  color: #1c1c1e;
   text-align: center;
   /* Secondary text */
   font-family: "Roboto", sans-serif;

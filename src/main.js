@@ -1,7 +1,21 @@
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message === "toggleVisibility") {
+//     const appContainer = document.getElementById("watermark-remover-container");
+//     if (appContainer) {
+//       if (
+//         appContainer.style.display === "none" ||
+//         !appContainer.style.display
+//       ) {
+//         appContainer.style.display = "block";
+//       } else {
+//         appContainer.style.display = "none";
+//       }
+//     }
+//   }
+// });
 import { createApp } from "vue";
 
 import Page from "./Page.vue";
-alert("I`m here!");
 const appContainer = document.createElement("div");
 appContainer.id = "watermark-remover-container";
 appContainer.style.position = "relative";
@@ -10,15 +24,16 @@ appContainer.style.top = "0";
 appContainer.style.right = "0";
 appContainer.style.width = "440px";
 appContainer.style.height = "580px";
-appContainer.style.border = "1px green";
+appContainer.style.border = "5px green";
 appContainer.style.borderRadius = "24px";
-appContainer.style.backgroundColor = "#fff";
-appContainer.style.zIndex = "2147483647"; // Максимально возможное значение для z-index
+appContainer.style.backgroundColor = "#eaddff";
+appContainer.style.zIndex = "100000"; //2147483647 Максимально возможное значение для z-index
 const closeButton = document.createElement("button");
 closeButton.style.position = "absolute";
 closeButton.style.top = "5px";
 closeButton.style.right = "5px";
-appContainer.innerText = "Watermark Remover Loading...";
+closeButton.style.backgroundColor = "#fff";
+closeButton.innerText = "Close";
 closeButton.onclick = () => {
   appContainer.remove();
 };

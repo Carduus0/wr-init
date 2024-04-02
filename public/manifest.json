@@ -25,7 +25,13 @@
         "storage",
         "scripting"
       ],
+      "web_accessible_resources": [
+        {
+          "resources": ["imageProcessingPage.html"],
+          "matches": ["<all_urls>"]
+        }
+      ],
 
       "host_permissions": [
-      "http://78.136.220.93:40008/remove_watermark"]
+      "http://158.160.66.115:40000/remove_watermark"]
 }

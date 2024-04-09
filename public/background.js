@@ -1,69 +1,104 @@
-// chrome.action.onClicked.addListener((tab) => {
-//   if (tab.id) {
-//     chrome.tabs.sendMessage(tab.id, { action: "toggle" });
-//   }
-// });
 chrome.action.onClicked.addListener((tab) => {
-  if (tab.id) {
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: tab.id },
-        files: ["main.js"],
+  // Проверить, активен ли контентный скрипт
+  chrome.scripting.executeScript(
+    {
+      target: { tabId: tab.id },
+      function: () => {
+        return !!window.myContentScriptLoaded;
       },
-      () => {
-        if (chrome.runtime.lastError) {
-          console.error(
-            `Error injecting script: ${chrome.runtime.lastError.message}`
-          );
-        }
+    },
+    (results) => {
+      // Если контентный скрипт не активен, внедрить его
+      if (results[0].result === false) {
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tab.id },
+            files: ["content.js"], // Укажите путь к файлу контентного скрипта
+          },
+          () => {
+            // После внедрения скрипта отправить сообщение для отрисовки окна
+            chrome.tabs.sendMessage(tab.id, { action: "openWindow" });
+          }
+        );
+      } else {
+        // Если контентный скрипт уже активен, просто отправляем сообщение
+        chrome.tabs.sendMessage(tab.id, { action: "openWindow" });
       }
-    );
-  }
+    }
+  );
 });
-// chrome.action.onClicked.addListener((tab) => {
-//   // Проверяем состояние видимости для текущей вкладки
-//   chrome.storage.local.get([`visibility_${tab.id}`], function (result) {
-//     let isVisible = result[`visibility_${tab.id}`];
-//     if (isVisible) {
-//       // Если окно уже видно, скрываем его
-//       chrome.scripting.executeScript({
-//         target: { tabId: tab.id },
-//         func: hideWindow,
-//       });
-//     } else {
-//       // Если окно скрыто, показываем его
-//       chrome.scripting.executeScript({
-//         target: { tabId: tab.id },
-//         files: ["main.js"],
-//       });
-//     }
-//     // Меняем и сохраняем состояние видимости
-//     isVisible = !isVisible;
-//     chrome.storage.local.set({ [`visibility_${tab.id}`]: isVisible });
-//   });
+
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.imageSrc) {
+//     const processingPageUrl =
+//       chrome.runtime.getURL("./processing.js") +
+//       "?image=" +
+//       encodeURIComponent(message.imageSrc);
+//     chrome.tabs.create({ url: processingPageUrl });
+
+//     sendResponse({ status: "Image processed successfully" });
+//   }
+
+//   return true;
 // });
 
-// function hideWindow() {
-//   let window = document.getElementById("watermark-remover-container");
-//   if (window) {
-//     window.style.display = "none"; // или window.remove() для его удаления
-//   }
-// }
+let processingTabId = null;
+let imageData = null;
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.imageFile) {
+  // открываем PageProcessing
+  if (request.action === "uploadImage") {
+    const binaryString = atob(request.fileData);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const arrayBuffer = bytes.buffer;
+
+    imageData = arrayBuffer;
+    console.log("imageData", imageData);
+
+    imageType = request.fileType; // Сохраняем MIME тип
+    chrome.tabs.create({ url: "./index.html" }, function (tab) {
+      processingTabId = tab.id; // Сохраняем ID для последующего общения
+    });
+  }
+  // Отправляем  на сервер
+  if (
+    request.action === "imageProcessed" &&
+    sender.tab.id === processingTabId
+  ) {
+    console.log(" Отправляем  на сервер");
+
+    const modifiedImageData = request.modifiedImageData;
+    const formData = new FormData();
+    formData.append(
+      "image",
+      new Blob([modifiedImageData], { type: request.fileType })
+    );
+
+    // Если у вас есть параметры remove_text и user, добавьте их в formData
+    if (request.remove_text) {
+      formData.append("remove_text", String(request.remove_text));
+    }
+    if (request.user) {
+      formData.append("user", request.user);
+    }
+
     fetch("http://158.160.66.115:40000/remove_watermark", {
-      //http://78.136.220.93:40008/remove_watermark
       method: "POST",
-      body: request.imageFile,
+      body: formData,
+      // body: modifiedImageData,
       // image/image_url
       // remove_text (необязательный) true/false
       // user
     })
-      .then((response) => response.blob()) // Преобразуем ответ в blob
+      .then((response) => response.blob())
       .then((blob) => {
-        // Создаем URL для blob, чтобы отправить его обратно в контентный скрипт
-        const imageUrl = URL.createObjectURL(blob);
-        sendResponse({ imageUrl: imageUrl });
+        chrome.tabs.sendMessage(processingTabId, {
+          action: "serverResponse",
+          serverData: blob,
+        });
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -72,29 +107,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   return true;
 });
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (tabId === processingTabId && changeInfo.status === "complete") {
+    console.log("Size of imageData before sending:", imageData.byteLength);
+    let bufferCopy = new Uint8Array(imageData);
+    let arrayBuffer = bufferCopy.buffer;
+    console.log("bufferCopy", arrayBuffer.byteLength);
+    chrome.tabs.sendMessage(tabId, {
+      action: "processImage",
+      fileData: arrayBuffer,
+      fileType: imageType,
+    });
+    processingTabId = null;
+    imageData = null;
+    imageType = null; // Сбрасываем MIME тип
+  }
+});
 //--------------------------------
-// // content-script.js или background.js
-// chrome.action.onClicked.addListener((tab) => {
-//   chrome.runtime.sendMessage({action: "toggleVisibility", tabId: tab.id});
-// });
-
-// // background.js
-// let windowsState = {};
-
-// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//   if (message.action === "toggleVisibility" && message.tabId) {
-//     if (windowsState[message.tabId]) {
-//       // Если окно уже видно, скрыть его и обновить состояние
-//       chrome.windows.remove(windowsState[message.tabId]);
-//       delete windowsState[message.tabId];
-//     } else {
-//       // Если окно скрыто, показать его и обновить состояние
-//       chrome.windows.create({ /* ваша конфигурация нового окна */ }, (newWindow) => {
-//         windowsState[message.tabId] = newWindow.id;
-//       });
-//     }
-//   }
-// });
 
 // // Убедитесь, что состояние обновляется при закрытии окна вручную
 // chrome.windows.onRemoved.addListener((windowId) => {

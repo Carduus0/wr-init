@@ -1,7 +1,7 @@
 <template>
   <div ref="pageContainer" class="page-container">
     <header class="header">
-      <button @click="removeApp" class="app-remove"></button>
+      <button @click="removeApp" class="app-remove">close</button>
       <div class="title">Remove Watermark</div>
       <div class="title">from Photo</div>
     </header>
@@ -11,34 +11,38 @@
         @dragover.prevent="allowDrop"
         @drop="handleDrop"
       >
+        <button
+          v-if="imageSrc"
+          class="re-upload__btn center-row"
+          @click="triggerFileInput"
+        >
+          <svg
+            id="svgReUploadImg"
+            width="25"
+            height="24"
+            viewBox="0 0 25 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              id="pathArrowReUploadImg"
+              d="M13.5236 3.21934L19.2833 9.03934C19.5722 9.33216 19.5722 9.80652 19.2833 10.0993C19.1457 10.2423 18.9569 10.3229 18.7597 10.3229C18.5625 10.3229 18.3737 10.2423 18.2361 10.0993L13.741 5.55934V16.7893C13.741 17.2036 13.4092 17.5393 13 17.5393C12.5908 17.5393 12.259 17.2036 12.259 16.7893V5.55934L7.76391 10.0993C7.62636 10.2419 7.43719 10.3214 7.2403 10.3193C7.04364 10.3203 6.85489 10.241 6.7167 10.0993C6.42777 9.80652 6.42777 9.33216 6.7167 9.03934L12.4764 3.21934C12.7657 2.92689 13.2343 2.92689 13.5236 3.21934Z"
+              fill="white"
+            />
+            <path
+              id="pathReUploadImg"
+              d="M8.0603 19.0793H17.9397C18.3489 19.0793 18.6807 19.4151 18.6807 19.8293C18.6807 20.2436 18.3489 20.5793 17.9397 20.5793H8.0603C7.65108 20.5793 7.31934 20.2436 7.31934 19.8293C7.31934 19.4151 7.65108 19.0793 8.0603 19.0793Z"
+              fill="white"
+            />
+          </svg>
+          Re-Upload
+        </button>
         <div class="preview__container" v-if="imageSrc">
           <img
             :src="imageSrc"
             alt="Preview image"
             style="max-width: 100%; max-height: 100%; object-fit: contain"
           />
-          <button class="re-upload__btn center-row" @click="triggerFileInput">
-            <svg
-              id="svgReUploadImg"
-              width="25"
-              height="24"
-              viewBox="0 0 25 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                id="pathArrowReUploadImg"
-                d="M13.5236 3.21934L19.2833 9.03934C19.5722 9.33216 19.5722 9.80652 19.2833 10.0993C19.1457 10.2423 18.9569 10.3229 18.7597 10.3229C18.5625 10.3229 18.3737 10.2423 18.2361 10.0993L13.741 5.55934V16.7893C13.741 17.2036 13.4092 17.5393 13 17.5393C12.5908 17.5393 12.259 17.2036 12.259 16.7893V5.55934L7.76391 10.0993C7.62636 10.2419 7.43719 10.3214 7.2403 10.3193C7.04364 10.3203 6.85489 10.241 6.7167 10.0993C6.42777 9.80652 6.42777 9.33216 6.7167 9.03934L12.4764 3.21934C12.7657 2.92689 13.2343 2.92689 13.5236 3.21934Z"
-                fill="white"
-              />
-              <path
-                id="pathReUploadImg"
-                d="M8.0603 19.0793H17.9397C18.3489 19.0793 18.6807 19.4151 18.6807 19.8293C18.6807 20.2436 18.3489 20.5793 17.9397 20.5793H8.0603C7.65108 20.5793 7.31934 20.2436 7.31934 19.8293C7.31934 19.4151 7.65108 19.0793 8.0603 19.0793Z"
-                fill="white"
-              />
-            </svg>
-            Re-Upload
-          </button>
         </div>
         <div v-else class="upload__info center-col">
           <div class="upload__img">
@@ -85,7 +89,7 @@ import { ref } from "vue";
 const pageContainer = ref(null);
 const fileInput = ref(null);
 const imageSrc = ref("");
-const showProgress = ref(false);
+
 makeImagesDraggable();
 
 function makeImagesDraggable() {
@@ -93,7 +97,8 @@ function makeImagesDraggable() {
   images.forEach((img) => {
     img.setAttribute("draggable", true);
     img.addEventListener("dragstart", (event) => {
-      event.dataTransfer.setData("text/uri-list", img.src);
+      const src = img.src;
+      event.dataTransfer.setData("text/uri-list", src);
     });
   });
 }
@@ -117,22 +122,28 @@ function allowDrop(event) {
 
 function handleDrop(event) {
   event.preventDefault();
-  const files = event.dataTransfer.files;
-  if (files.length > 0) {
-    for (const file of files) {
-      console.log(`Dropped file MIME type: ${file.type}`);
+  const url = event.dataTransfer.getData("URL"); // Получаем URL, а не "text/uri-list"
+
+  if (url) {
+    previewFile(url); // Предполагается, что previewFile может обрабатывать как URL, так и File объекты
+  } else {
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
       if (file.type.startsWith("image/")) {
-        sendImageToBackground(file);
+        console.log(`Dropped file MIME type: ${file.type}`);
         console.log(`File size: ${file.size}`);
+
+        // Сохраняем файл в состояние компонента
+        fileInput.value = file;
+
         previewFile(file);
-        break; // Предполагаем, что нужно обработать только один файл
       } else {
         console.log("Dropped file type is not an image or file is too large.");
       }
     }
   }
 }
-
 function triggerFileInput() {
   fileInput.value?.click();
 }
@@ -140,25 +151,29 @@ function handleFiles(event) {
   const file = event.target.files[0];
   if (file.type.startsWith("image/")) {
     console.log(`File size: ${file.size}`);
+    imageSrc.value = URL.createObjectURL(file);
     previewFile(file);
   } else {
     console.log("File type is not an image or file is too large.");
   }
 }
 
-function previewFile(file) {
+function previewFile(srcOrFile) {
   clearDropZone();
-  // imageSrc.value = URL.createObjectURL(file);
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imageSrc.value = URL.createObjectURL(file);
-  };
-
-  reader.onerror = (error) => {
-    console.error("Error occurred while reading file:", error);
-  };
-
-  reader.readAsDataURL(file);
+  if (typeof srcOrFile === "string") {
+    imageSrc.value = srcOrFile; // Если это строка, значит URL
+  } else if (srcOrFile instanceof File) {
+    // Если это файл, читаем его и создаем data URL или Object URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imageSrc.value = e.target.result;
+      // imageSrc.value = URL.createObjectURL(file);
+    };
+    reader.onerror = (error) => {
+      console.error("Error occurred while reading file:", error);
+    };
+    reader.readAsDataURL(srcOrFile);
+  }
 }
 
 function clearDropZone() {
@@ -167,64 +182,20 @@ function clearDropZone() {
     imageSrc.value = "";
   }
 }
-//-----------------------------------------
+//------------------переслать в bg-----------------------
+// Внутри компонента Page.vue внутри <script setup>
+
 function startProcessing() {
-  const processingPageUrl = chrome.runtime.getURL("imageProcessingPage.html");
-  chrome.tabs.create({ url: processingPageUrl });
+  if (imageSrc.value) {
+    chrome.runtime.sendMessage({ imageSrc: imageSrc.value }, (response) => {
+      console.log("Response received from background:", response);
+    });
+  } else {
+    console.error("No image to process");
+  }
 }
-// ------download-----------
-const downloadImage = () => {
-  const link = document.createElement("a");
-  link.href = imageSrc;
-  link.download = "downloadedImage.png"; // Имя файла для скачивания
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 //-----------send------------------
-function sendImageToBackground(file) {
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const arrayBuffer = event.target.result;
-    chrome.runtime.sendMessage(
-      {
-        action: "uploadImage",
-        fileData: arrayBuffer,
-        fileName: file.name,
-        fileType: file.type,
-      },
-      (response) => {
-        if (response.imageUrl) {
-          // здесь код для обработки ответа
-          handleResponse(response);
-        } else {
-          console.error(
-            "No response from background script or error occurred."
-          );
-        }
-      }
-    );
-  };
-  reader.onerror = function (error) {
-    console.error("Error reading file:", error);
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function handleResponse(response) {
-  if (response && response.imageUrl) {
-    const img = document.createElement("img");
-    img.src = response.imageUrl;
-    document.body.appendChild(img);
-  } else {
-    console.error("No response from background script or error occurred.");
-  }
-  // Убедитесь, что вы также вызываете URL.revokeObjectURL в нужный момент, чтобы избежать утечек памяти.
-  // при удалении изображения из превью или когда компонент удаляется.
-  // Также важно учитывать этот вызов после использования изображения:
-  //URL.revokeObjectURL(imageSrc.value);
-}
 </script>
 <style scoped>
 @font-face {
@@ -271,7 +242,6 @@ function handleResponse(response) {
 .app-remove {
   width: 15px;
   height: 15px;
-  background-color: red;
 }
 .page-container {
   font-family: "Roboto", sans-serif;
